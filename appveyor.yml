@@ -11,8 +11,7 @@ install:
 
 before_build:
     - mkdir build
-    - cd build
-    - cmake -G"Visual Studio 12" -T v120 ..\CMake\ -B.\build
+    - cmake -G"Visual Studio 12" -T v120 .\ -B.\build
 
 build:
     project: build\rxcpp.sln
