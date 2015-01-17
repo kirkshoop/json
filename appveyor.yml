@@ -10,8 +10,7 @@ install:
     - git submodule -q update --init
 
 before_build:
-    - mkdir build
-    - cmake -G"Visual Studio 12" -T v120 .\ -B.\build
+    - cmake -G"Visual Studio 12" -T v120 .\
 
 build:
-    project: build\rxcpp.sln
+    project: rxcpp.sln
