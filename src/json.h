@@ -11,12 +11,26 @@
 
 #pragma once
 
+#include <cstdint>
+#include <ciso646>
+
 #include <initializer_list>  // std::initializer_list
 #include <iostream>          // std::istream, std::ostream
 #include <map>               // std::map
 #include <string>            // std::string
 #include <vector>            // std::vector
 #include <iterator>          // std::iterator
+
+#if defined(_MSC_VER)
+#define JSON_NO_RETURN __declspec(noreturn)
+#else
+#define JSON_NO_RETURN __attribute__((noreturn))
+#endif
+
+#ifdef JSON_TEST
+// Make everything public for testing purposes
+#define private public
+#endif
 
 namespace nlohmann
 {
@@ -418,7 +432,7 @@ class json
         /// read the next character, stripping whitespace
         bool next();
         /// raise an exception with an error message
-        inline void error(const std::string&) const __attribute__((noreturn));
+        inline JSON_NO_RETURN void error(const std::string&) const;
         /// parse a quoted string
         inline std::string parseString();
         /// transforms a unicode codepoint to it's UTF-8 presentation
@@ -450,3 +464,7 @@ class json
 
 /// user-defined literal operator to create JSON objects from strings
 nlohmann::json operator "" _json(const char*, std::size_t);
+
+#ifdef JSON_TEST
+#undef private
+#endif

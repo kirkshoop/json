@@ -2345,7 +2345,7 @@ std::string json::parser::codePointToUTF8(unsigned int codePoint) const
     {
         // Can't be tested without direct access to this private method.
         std::string errorMessage = "Invalid codePoint: ";
-        errorMessage += codePoint;
+        errorMessage += std::to_string(codePoint);
         error(errorMessage);
     }
 }

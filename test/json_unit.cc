@@ -1,9 +1,16 @@
 #define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_CPP11_NULLPTR
 #include "catch.hpp"
 
 #include "json.h"
 
 using json = nlohmann::json;
+
+#if defined(_MSC_VER)
+#define SKIP_FOR_VS(x)
+#else
+#define SKIP_FOR_VS(x) x
+#endif
 
 TEST_CASE("array")
 {
@@ -150,7 +157,8 @@ TEST_CASE("array")
         json nonarray = 1;
         CHECK_THROWS_AS(nonarray.at(0), std::domain_error);
         CHECK_THROWS_AS(const int i = nonarray[0], std::domain_error);
-        CHECK_NOTHROW(j[21]);
+        // MSVC: STL will exit due to access violation
+        SKIP_FOR_VS(CHECK_NOTHROW(j[21]));
         CHECK_THROWS_AS(const int i = j.at(21), std::out_of_range);
         CHECK_THROWS_AS(nonarray[0] = 10, std::domain_error);
         // the next test is remove due to undefined behavior
@@ -162,7 +170,8 @@ TEST_CASE("array")
         const json j_const = j;
         CHECK_THROWS_AS(nonarray_const.at(0), std::domain_error);
         CHECK_THROWS_AS(const int i = nonarray_const[0], std::domain_error);
-        CHECK_NOTHROW(j_const[21]);
+        // MSVC: STL will exit due to access violation
+        SKIP_FOR_VS(CHECK_NOTHROW(j_const[21]));
         CHECK_THROWS_AS(const int i = j.at(21), std::out_of_range);
 
         {
@@ -175,7 +184,8 @@ TEST_CASE("array")
         }
 
         const json k = j;
-        CHECK_NOTHROW(k[21]);
+        // MSVC: STL will exit due to access violation
+        SKIP_FOR_VS(CHECK_NOTHROW(k[21]));
         CHECK_THROWS_AS(const int i = k.at(21), std::out_of_range);
 
         // add initializer list
@@ -864,7 +874,8 @@ TEST_CASE("string")
     SECTION("Dumping")
     {
         CHECK(json("\"").dump(0) == "\"\\\"\"");
-        CHECK(json("\\").dump(0) == "\"\\\\\"");
+        // MSVC: 2015 preview has string-literal parsing bug
+        SKIP_FOR_VS(CHECK(json("\\").dump(0) == "\"\\\\\""));
         CHECK(json("\n").dump(0) == "\"\\n\"");
         CHECK(json("\t").dump(0) == "\"\\t\"");
         CHECK(json("\b").dump(0) == "\"\\b\"");
@@ -1720,17 +1731,19 @@ TEST_CASE("Parser")
         // normal forward slash in ASCII range
         CHECK(json::parse("\"\\u002F\"") == json("/"));
         CHECK(json::parse("\"\\u002f\"") == json("/"));
-        // german a umlaut
-        CHECK(json::parse("\"\\u00E4\"") == json(u8"\u00E4"));
-        CHECK(json::parse("\"\\u00e4\"") == json(u8"\u00E4"));
-        // weird d
-        CHECK(json::parse("\"\\u0111\"") == json(u8"\u0111"));
-        // unicode arrow left
-        CHECK(json::parse("\"\\u2190\"") == json(u8"\u2190"));
-        // pleasing osiris by testing hieroglyph support
-        CHECK(json::parse("\"\\uD80C\\uDC60\"") == json(u8"\U00013060"));
-        CHECK(json::parse("\"\\ud80C\\udc60\"") == json(u8"\U00013060"));
 
+        // MSVC: unicode characterts are not allowed in ansi string literals
+
+        // german a umlaut
+        SKIP_FOR_VS(CHECK(json::parse("\"\\u00E4\"") == json(u8"\u00E4")));
+        SKIP_FOR_VS(CHECK(json::parse("\"\\u00e4\"") == json(u8"\u00E4")));
+        // weird d
+        SKIP_FOR_VS(CHECK(json::parse("\"\\u0111\"") == json(u8"\u0111")));
+        // unicode arrow left
+        SKIP_FOR_VS(CHECK(json::parse("\"\\u2190\"") == json(u8"\u2190")));
+        // pleasing osiris by testing hieroglyph support
+        SKIP_FOR_VS(CHECK(json::parse("\"\\uD80C\\uDC60\"") == json(u8"\U00013060")));
+        SKIP_FOR_VS(CHECK(json::parse("\"\\ud80C\\udc60\"") == json(u8"\U00013060")));
 
         // no hex numbers behind the \u
         CHECK_THROWS_AS(json::parse("\"\\uD80v\""), std::invalid_argument);
